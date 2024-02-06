@@ -52,25 +52,19 @@ app.post('/chat', async (req, res) => {
 
     console.log(`Received message: ${userInput} for thread ID: ${threadId}`);
 
-    // Add the user's message to the thread
-    await openai.beta.threads.messages.create({
-      thread_id: threadId,
+    await openai.beta.threads.messages.create(threadId, {
       role: 'user',
       content: userInput,
     });
 
     // Run the Assistant
-    const run = await openai.beta.threads.runs.create({
-      thread_id: threadId,
-      assistant_id: 'asst_RqDZo7ho03fEnvpRg0F0Ljk8',
+    const run = await openai.beta.threads.runs.create(threadId, {
+      assistant_id: 'asst_jMxT3zLGZXlxCOW52vTzX69Z',
     });
 
     let runStatus;
     do {
-      runStatus = await openai.beta.threads.runs.retrieve({
-        thread_id: threadId,
-        run_id: run.id,
-      });
+      runStatus = await openai.beta.threads.runs.retrieve(threadId, run.id);
 
       // Check for action requirements and handle them
 
@@ -104,9 +98,7 @@ app.post('/chat', async (req, res) => {
     } while (runStatus.status !== 'completed');
 
     // Retrieve and return the latest message from the assistant
-    const messages = await openai.beta.threads.messages.list({
-      thread_id: threadId,
-    });
+    const messages = await openai.beta.threads.messages.list(threadId);
     const response = messages.data[0].content[0].text.value;
 
     console.log(`Assistant response: ${response}`);
