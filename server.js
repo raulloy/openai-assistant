@@ -3,6 +3,7 @@ import config from './config.js';
 import OpenAI from 'openai';
 import Airtable from 'airtable';
 import cors from 'cors';
+import { createRecord } from './functions.js';
 
 const app = express();
 
@@ -69,31 +70,34 @@ app.post('/chat', async (req, res) => {
       // Check for action requirements and handle them
 
       if (runStatus.status === 'requires_action') {
-        for (const toolCall of runStatus.required_action.submit_tool_outputs
-          .tool_calls) {
-          if (toolCall.function.name === 'create_record') {
-            const args = JSON.parse(toolCall.function.args);
+        // Assuming 'create_record' is always the required action
+        const args = JSON.parse(
+          runStatus.required_action.submit_tool_outputs.tool_calls[0].function
+            .arguments
+        );
+        const toolCallId =
+          runStatus.required_action.submit_tool_outputs.tool_calls[0].id;
+        const output = await createRecord(
+          args.customer,
+          args.quantity,
+          args.product
+        );
 
-            // Assuming args contain name, qty, product, and optionally date
-            const output = await createRecord(
-              args.name,
-              args.qty,
-              args.product
-            );
+        await openai.beta.threads.runs.submitToolOutputs(threadId, run.id, {
+          tool_outputs: [
+            {
+              tool_call_id: toolCallId,
+              output: JSON.stringify(output),
+            },
+          ],
+        });
 
-            await openai.beta.threads.runs.submit_tool_outputs({
-              thread_id: threadId,
-              run_id: run.id,
-              tool_outputs: [
-                {
-                  tool_call_id: toolCall.id,
-                  output: JSON.stringify(output),
-                },
-              ],
-            });
-          }
-        }
-        // Add delay logic here if necessary
+        // console.log(
+        //   runStatus.required_action.submit_tool_outputs.tool_calls[0].id
+        // );
+        // console.log(
+        //   runStatus.required_action.submit_tool_outputs.tool_calls[0].function.arguments
+        // );
       }
     } while (runStatus.status !== 'completed');
 
@@ -116,3 +120,30 @@ app.listen(port, () => {
 // app.use('/', (req, res) => {
 //   res.send("<h2>I'm Aurora, an OpenAI Assistant</h2>");
 // });
+
+// if (runStatus.status === 'requires_action') {
+//     // Assuming 'create_record' is always the required action
+//     const toolCall =
+//       runStatus.required_action.submit_tool_outputs.tool_calls.find(
+//         (tc) => tc.function.name === 'create_record'
+//       );
+
+//     console.log(toolCall);
+
+//     if (toolCall) {
+//       const args = JSON.parse(toolCall.function.args);
+//       // Assuming args contain name, qty, product, and optionally date
+//       const output = await createRecord(args.name, args.qty, args.product);
+
+//       await openai.beta.threads.runs.submit_tool_outputs({
+//         thread_id: threadId,
+//         run_id: run.id,
+//         tool_outputs: [
+//           {
+//             tool_call_id: toolCall.id,
+//             output: JSON.stringify(output),
+//           },
+//         ],
+//       });
+//     }
+//   }

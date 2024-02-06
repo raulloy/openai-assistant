@@ -1,3 +1,6 @@
+import axios from 'axios';
+import config from './config.js';
+
 export const addRecordToAirtable = async (
   base,
   customer,
@@ -18,10 +21,10 @@ export const addRecordToAirtable = async (
   }
 };
 
-export const createRecord = async (name, qty, product, date = '02/05/2024') => {
+export const createRecord = async (name, qty, product, date = '02/06/2024') => {
   const url = 'https://api.airtable.com/v0/appbnluH463ay8yB9/Orders';
   const headers = {
-    Authorization: `Bearer ${AIRTABLE_API_KEY}`,
+    Authorization: `Bearer ${config.AIRTABLE_API_KEY}`,
     'Content-Type': 'application/json',
   };
   const data = {
