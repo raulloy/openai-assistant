@@ -62,7 +62,7 @@ app.post('/chat', async (req, res) => {
     // Run the Assistant
     const run = await openai.beta.threads.runs.create({
       thread_id: threadId,
-      assistant_id: assistantId,
+      assistant_id: 'asst_RqDZo7ho03fEnvpRg0F0Ljk8',
     });
 
     let runStatus;
