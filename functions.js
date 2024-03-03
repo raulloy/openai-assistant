@@ -1,70 +1,44 @@
 import axios from 'axios';
 import config from './config.js';
 
-export const addRecordToAirtable = async (
-  base,
-  customer,
-  quantity,
-  product,
-  date = '02/05/2024'
-) => {
-  try {
-    const record = await base('Orders').create({
-      Customer: customer,
-      Quantity: quantity,
-      Product: product,
-      Date: date,
-    });
-    console.log('Created record:', record);
-  } catch (err) {
-    console.error('Error creating record:', err);
-  }
-};
-
-export const createRecord = async (name, qty, product, date = '02/06/2024') => {
+export const createRecord = async (orders) => {
   const url = 'https://api.airtable.com/v0/appbnluH463ay8yB9/Orders';
   const headers = {
     Authorization: `Bearer ${config.AIRTABLE_API_KEY}`,
     'Content-Type': 'application/json',
   };
-  const data = {
-    records: [
-      {
-        fields: {
-          Customer: name,
-          Quantity: qty,
-          Product: product,
-          Date: date,
-        },
-      },
-    ],
-  };
+
+  // Getting today's date in dd/mm/yyyy format
+  const now = new Date();
+  const date =
+    now.getDate().toString().padStart(2, '0') +
+    '/' +
+    (now.getMonth() + 1).toString().padStart(2, '0') +
+    '/' +
+    now.getFullYear().toString();
+
+  // Transforming orders into Airtable records format
+  const records = orders.map((order) => ({
+    fields: {
+      Customer: order.customer,
+      Quantity: order.quantity,
+      Product: order.product,
+      Date: date,
+    },
+  }));
+
+  const data = { records };
 
   try {
     const response = await axios.post(url, data, { headers: headers });
 
     if (response.status === 200) {
-      console.log('Order created successfully.');
+      console.log('Orders created successfully.');
       return response.data;
     } else {
-      console.log(`Failed to create order: ${response.statusText}`);
+      console.log(`Failed to create orders: ${response.statusText}`);
     }
   } catch (error) {
     console.error(`Error: ${error.message}`);
   }
 };
-
-//AirTable Function
-// base('Orders')
-//   .create({
-//     Customer: 'Carolina',
-//     Quantity: '2',
-//     Product: 'Pan Arabe',
-//     Date: '02/05/2024',
-//   })
-//   .then((record) => {
-//     console.log('Created record:', record);
-//   })
-//   .catch((err) => {
-//     console.error('Error creating record:', err);
-//   });
